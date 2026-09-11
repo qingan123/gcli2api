@@ -3,15 +3,42 @@
 """
 
 import os
+import asyncio
+import json
+import socket
+import asyncio
+import json
+import socket
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from log import log
+from src.utils import verify_panel_token
+from src.utils import verify_panel_token
 
 
 # 创建路由器
 router = APIRouter(prefix="/version", tags=["version"])
+
+
+async def _run_update_script() -> None:
+    """Ask the host updater over the bind-mounted Unix socket."""
+    socket_path = "/app/data/.gcli2api-update.sock"
+    if not os.path.exists(socket_path):
+        raise RuntimeError("主机更新服务未运行")
+    request = json.dumps({"action": "update"}).encode() + b"\n"
+    connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        connection.settimeout(5)
+        connection.connect(socket_path)
+        connection.sendall(request)
+        response = connection.recv(4096)
+    finally:
+        connection.close()
+    result = json.loads(response.decode())
+    if not result.get("success"):
+        raise RuntimeError(result.get("error", "主机更新服务拒绝了请求"))
 
 
 @router.get("/info")
@@ -105,3 +132,14 @@ async def get_version_info(check_update: bool = False):
             "success": False,
             "error": str(e)
         })
+
+
+@router.post("/update")
+async def update_from_panel(token: str = Depends(verify_panel_token)):
+    """通过部署目录提供的受限脚本更新并重启当前服务。"""
+    try:
+        asyncio.create_task(_run_update_script())
+        return JSONResponse({"success": True, "message": "更新已开始，服务将在更新完成后自动重启"})
+    except Exception as e:
+        log.error(f"启动更新失败: {e}")
+        return JSONResponse({"success": False, "error": str(e)}, status_code=500)

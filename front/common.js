@@ -3175,6 +3175,34 @@ async function checkForUpdates() {
     }
 }
 
+// 通过服务器更新到官方仓库最新版本
+async function updateNow() {
+    const updateBtn = document.getElementById('updateNowBtn');
+    if (!updateBtn) return;
+    if (!confirm('确定更新 GCLI2API 吗？服务会短暂重启，凭据和数据不会删除。')) return;
+
+    const originalText = updateBtn.textContent;
+    try {
+        updateBtn.disabled = true;
+        updateBtn.textContent = '更新中...';
+        const response = await fetch('./version/update', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || '更新启动失败');
+        }
+        showStatus(data.message || '更新已开始，服务将自动重启', 'success');
+        updateBtn.textContent = '更新已开始';
+    } catch (error) {
+        console.error('启动更新失败:', error);
+        showStatus(`启动更新失败: ${error.message}`, 'error');
+        updateBtn.disabled = false;
+        updateBtn.textContent = originalText;
+    }
+}
+
 // =====================================================================
 // 页面初始化
 // =====================================================================
