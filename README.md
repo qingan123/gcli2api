@@ -1,5 +1,27 @@
 # GeminiCLI to API
 
+## 一键部署与更新（本仓库）
+
+### Linux/Docker 一键部署
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qingan123/gcli2api/master/deploy.sh -o deploy.sh && chmod +x deploy.sh && ./deploy.sh
+```
+
+脚本会克隆本仓库、创建本地 `.env`、构建镜像并启动容器。凭据和运行数据保存在 `data/creds` 与 `data`，不会提交到 GitHub。
+
+### 更新本仓库部署
+
+在部署目录执行：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/qingan123/gcli2api/master/update.sh -o update.sh && chmod +x update.sh && ./update.sh
+```
+
+更新脚本只同步本仓库 `master` 分支，重新构建并重启本项目容器，保留 `.env`、`data` 和 `data/creds`。
+
+> 更新脚本仅负责部署 `qingan123/gcli2api` 本仓库，不会更新服务器上的其他项目或容器。
+
 **将 GeminiCLI 和 Antigravity 转换为 OpenAI 、GEMINI 和 Claude API 兼容接口**
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)

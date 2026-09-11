@@ -100,3 +100,7 @@ tools/
 aicode/
 streamchat/
 tests/
+
+# Local deployment files
+docker-compose.local.yml
+data/
